@@ -1,36 +1,106 @@
-# This is a basic workflow to help you get started with Actions
+name: 🚀 Auto Cool Level Generator
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
+  schedule:
+    - cron: '*/15 * * * *' # Setiap 15 menit sekali
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  generate-level:
+    name: 🌟 Generate Cool Level
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - name: ⬇️ Checkout Code
+        uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: 🔔 Sound Bell (Log)
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          echo ""
+          echo "=============================="
+          echo "🔔✨✨ LEVEL UNLOCKED! ✨✨🔔"
+          echo "🚨🚨🚨  NEW COOL LEVEL!  🚨🚨🚨"
+          echo "=============================="
+          echo ""
+
+      - name: 📝 Generate Next Cool Level (no ASCII)
+        shell: bash
+        run: |
+          set -e
+
+          cool_names=(
+            "Vortex" "Nebula" "Phoenix" "Falcon" "Titan" "Shadow" "Blaze" "Nova" "Specter" "Stellar"
+            "Inferno" "Cosmos" "Zephyr" "Obsidian" "Glacier" "Thunder" "Matrix" "Aurora" "Samurai" "Ninja"
+            "Ronin" "Valkyrie" "Oracle" "Sonic" "Ranger" "Drift" "Mirage" "Cipher" "Echo" "Titanium"
+            "Genesis" "Saber" "Onyx" "Blizzard" "Venom" "Storm" "Astro" "Galaxy" "Eclipse" "Magma"
+            "Turbo" "Rogue" "Elemental" "Surge" "Radiant" "Zenith" "Prime" "Sentinel" "Golem" "Mystic"
+          )
+
+          mkdir -p levels
+
+          last_name=""
+          if ls levels/level-*-*.txt 1> /dev/null 2>&1; then
+            last_file=$(ls levels/level-*-*.txt | sort | tail -n 1)
+            last_name=$(basename "$last_file" | sed -E 's/level-[0-9]{8}-[0-9]{4}-(.*)\.txt/\1/')
+          fi
+
+          idx=0
+          if [ -n "$last_name" ]; then
+            for i in "${!cool_names[@]}"; do
+              if [[ "${cool_names[$i]}" == "$last_name" ]]; then
+                idx=$(( (i + 1) % ${#cool_names[@]} ))
+                break
+              fi
+            done
+          fi
+
+          next_name="${cool_names[$idx]}"
+          file_name="levels/level-$(date +%Y%m%d-%H%M)-${next_name}.txt"
+
+          {
+            echo "# 🌌 Level: $next_name"
+            echo "# Generated at: $(date -u)"
+            echo "# Dijalankan oleh: tianamulyasari2@gmail.com"
+          } > "$file_name"
+
+          # Simpan nama level ke environment agar bisa dipakai di step berikutnya (Telegram)
+          echo "LEVEL_NAME=$next_name" >> $GITHUB_ENV
+
+          echo "Created $file_name"
+
+      - name: ⏰ Generate Formatted Time
+        run: |
+          echo "FORMATTED_TIME=$(TZ='Asia/Jakarta' date '+%d-%m-%Y %H:%M:%S WIB')" >> $GITHUB_ENV
+
+      - name: 🔢 Generate Notification Counter
+        id: notif-counter
+        run: |
+          # Hitung jumlah file level yang sudah dibuat sebagai counter notifikasi
+          count=$(ls levels/level-*-*.txt 2>/dev/null | wc -l)
+          echo "NOTIF_COUNTER=$count" >> $GITHUB_ENV
+
+      - name: 🔔 Kirim Notifikasi ke Telegram
+        uses: appleboy/telegram-action@v0.1.0
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ✨🚨 *LEVEL UNLOCKED!* 🚨✨
+            🎮 Level baru **${{ env.LEVEL_NAME }}** sudah dibuat di repo `${{ github.repository }}`
+
+            🕒 Waktu: `${{ env.FORMATTED_TIME }}`
+            🔢 Notifikasi ke: *${{ env.NOTIF_COUNTER }}*
+            👤 Oleh: **tianamulyasari2@gmail.com**
+            ---
+            #NextLevel
+
+      - name: 🤖 Configure Git
+        run: |
+          git config user.name "tianamulyasari2"
+          git config user.email "tianamulyasari2@gmail.com"
+
+      - name: 🚩 Commit & Push Changes
+        run: |
+          git add levels/
+          git commit -m "✨ Add Level: ${{ env.LEVEL_NAME }} (by tianamulyasari2@gmail.com)" || echo "Nothing to commit"
+          git push
