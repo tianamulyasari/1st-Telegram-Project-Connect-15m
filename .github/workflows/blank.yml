@@ -2,7 +2,7 @@ name: 🚀 Auto Cool Level Generator
 
 on:
   schedule:
-    - cron: '*/15 * * * *' # Setiap 15 menit sekali
+    - cron: '*/15 * * * *' # Every 15 minutes
   workflow_dispatch:
 
 jobs:
@@ -14,13 +14,14 @@ jobs:
       - name: ⬇️ Checkout Code
         uses: actions/checkout@v4
 
-      - name: 🔔 Sound Bell (Log)
+      - name: ✨ Gaming Level Unlocked Banner
         run: |
           echo ""
-          echo "=============================="
-          echo "🔔✨✨ LEVEL UNLOCKED! ✨✨🔔"
-          echo "🚨🚨🚨  NEW COOL LEVEL!  🚨🚨🚨"
-          echo "=============================="
+          echo "╔═══🎮════════════════════🎮═══╗"
+          echo "║ 🕹️ LEVEL UP UNLOCKED!  🕹️  ║"
+          echo "║ ⭐️ ACHIEVEMENT UNLOCKED! ⭐️ ║"
+          echo "║ 🚀 READY FOR NEXT QUEST! 🚀  ║"
+          echo "╚═══🎮════════════════════🎮═══╝"
           echo ""
 
       - name: 📝 Generate Next Cool Level (no ASCII)
@@ -60,39 +61,43 @@ jobs:
           {
             echo "# 🌌 Level: $next_name"
             echo "# Generated at: $(date -u)"
-            echo "# Dijalankan oleh: tianamulyasari2@gmail.com"
+            echo "# By: tianamulyasari2@gmail.com"
           } > "$file_name"
 
-          # Simpan nama level ke environment agar bisa dipakai di step berikutnya (Telegram)
           echo "LEVEL_NAME=$next_name" >> $GITHUB_ENV
-
           echo "Created $file_name"
 
       - name: ⏰ Generate Formatted Time
         run: |
-          echo "FORMATTED_TIME=$(TZ='Asia/Jakarta' date '+%d-%m-%Y %H:%M:%S WIB')" >> $GITHUB_ENV
+          echo "FORMATTED_TIME=$(TZ='Asia/Jakarta' date '+%d/%m/%Y %H:%M:%S WIB')" >> $GITHUB_ENV
 
       - name: 🔢 Generate Notification Counter
         id: notif-counter
         run: |
-          # Hitung jumlah file level yang sudah dibuat sebagai counter notifikasi
           count=$(ls levels/level-*-*.txt 2>/dev/null | wc -l)
           echo "NOTIF_COUNTER=$count" >> $GITHUB_ENV
 
-      - name: 🔔 Kirim Notifikasi ke Telegram
+      - name: 🔔 Send Notification to Telegram
         uses: appleboy/telegram-action@v0.1.0
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
-            ✨🚨 *LEVEL UNLOCKED!* 🚨✨
-            🎮 Level baru **${{ env.LEVEL_NAME }}** sudah dibuat di repo `${{ github.repository }}`
+            <b>╔═══🎮══════════🎮═══╗</b>
+            <b>      🕹️<b>LEVEL UP UNLOCKED</b>🕹️  </b>
+            <b> ⭐️<b>ACHIEVEMENT UNLOCKED</b>⭐️ </b>
+            <b>   🚀READY FOR NEXT QUEST🚀  </b>
+            <b>╚═══🎮══════════🎮═══╝</b>
 
-            🕒 Waktu: `${{ env.FORMATTED_TIME }}`
-            🔢 Notifikasi ke: *${{ env.NOTIF_COUNTER }}*
-            👤 Oleh: **tianamulyasari2@gmail.com**
-            ---
-            #NextLevel
+            <b>• 🎮 New level :</b> <b>${{ env.LEVEL_NAME }}</b>
+            <b>• 🗂️ Repository :</b> <b>${{ github.repository }}</b>
+            <b>• 🕒 Time :</b> <b>${{ env.FORMATTED_TIME }}</b>
+            <b>• 🔢 Notification number :</b> <b>${{ env.NOTIF_COUNTER }}</b>
+            <b>• 👤 Auto commit by :</b> <b>tianamulyasari2@gmail.com</b>
+
+            <b>#NextLevel #GamingMode</b>
+            <b>💯 This script was 100% created by Abie Haryatmo</b>
+          format: html
 
       - name: 🤖 Configure Git
         run: |
